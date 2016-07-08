@@ -86,6 +86,20 @@ class MultipleVhostsTest(util.ApacheTest):
         self.assertRaises(
             errors.NotSupportedError, self.config.prepare)
 
+    @mock.patch("certbot_apache.configurator.logger.debug")
+    def test_path_surgery(self, mock_debug):
+        all_path = {"PATH": "/usr/local/bin:/bin/:/usr/sbin/:/usr/local/sbin/",
+        with mock.patch.dict('os.environ', all_path) as env:
+            self.config._path_surgery("thingy")
+            self.assertEquals(mock.debug.call_count, 0)
+            self.assertEquals(env, all_path)
+        no_path = {"PATH", "/tmp/"}
+        with mock.patch.dict('os.environ', no_path) as env:
+            self.config._path_surgery("thingy")
+            self.assertEquals(mock.debug.call_count, 1)
+            self.assertTrue("/usr/local/bin" in env)
+            self.assertTrue("/tmp" in env)
+
     def test_add_parser_arguments(self):  # pylint: disable=no-self-use
         from certbot_apache.configurator import ApacheConfigurator
         # Weak test..
